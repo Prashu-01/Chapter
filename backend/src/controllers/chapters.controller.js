@@ -6,6 +6,13 @@ import { getChaptersService } from "../services/chapters.service.js";
 export async function getAllChapters(req, res) {
     try {
         const query = {};
+        // filters
+        if (req.query.subject) query.subject = req.query.subject;
+        if (req.query.class) query.class = req.query.class;
+        if (req.query.unit) query.unit = req.query.unit;
+        if (req.query.status) query.status = req.query.status;
+        if (req.query.weakChapters) query.isWeakChapters = req.query.weakChapters;
+        
         const chapters = await getChaptersService(query);
 
         // redis logic
@@ -26,7 +33,7 @@ export async function getChapterDetails(req, res) {
     try {
         const chapter = await getChaptersService(query);
         // console.log(chapter);
-        res.status(200).json({ success: true, data: chapter });
+        res.status(200).json(chapter);
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: "Internal server error!" });
