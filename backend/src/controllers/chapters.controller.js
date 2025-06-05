@@ -1,7 +1,8 @@
 import fs from "fs/promises";
+import redisClient from "../../config/redisClient.js";
 
 import Chapter from "../models/chapter.js";
-import { getChaptersService } from "../services/chapters.service.js";
+import { getChapterDetailService, getChaptersService } from "../services/chapters.service.js";
 
 export async function getAllChapters(req, res) {
     try {
@@ -12,10 +13,25 @@ export async function getAllChapters(req, res) {
         if (req.query.unit) query.unit = req.query.unit;
         if (req.query.status) query.status = req.query.status;
         if (req.query.weakChapters) query.isWeakChapters = req.query.weakChapters;
-        
-        const chapters = await getChaptersService(query);
+
+        // pagination
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
         // redis logic
+        const cacheKey = `chapters:${JSON.stringify({ ...query, page })}`;
+        // console.log("key ",cacheKey);
+
+        const cachedData = await redisClient.get(cacheKey);
+        // console.log("cached data", cachedData);
+        if (cachedData) {
+            return res.status(200).json(JSON.parse(cachedData));
+        }
+
+        const chapters = await getChaptersService(query, skip, limit);
+        // add to cache
+        await redisClient.set(cacheKey, JSON.stringify(chapters.data), { EX: 3600 });
 
         res.status(200).json(chapters);
     } catch (error) {
@@ -27,11 +43,8 @@ export async function getAllChapters(req, res) {
 export async function getChapterDetails(req, res) {
     if (!req.params.id) return res.status(404).json({ msg: "No Id Found!" });
 
-    const query = {};
-    query._id = req.params.id;
-
     try {
-        const chapter = await getChaptersService(query);
+        const chapter = await getChapterDetailService(req.params.id);
         // console.log(chapter);
         res.status(200).json(chapter);
     } catch (error) {
