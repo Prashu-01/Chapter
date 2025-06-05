@@ -94,9 +94,10 @@ export async function uploadChapters(req, res) {
             });
         }
 
+        // invalidate cache
+        await redisClient.flushAll();
+
         res.status(201).json({ msg: "All Uplaoded!" });
-
-
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: "Internal server error!" });
