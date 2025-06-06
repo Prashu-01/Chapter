@@ -20,8 +20,7 @@ export async function getAllChapters(req, res) {
         const skip = (page - 1) * limit;
 
         // redis logic
-        const cacheKey = `chapters:${JSON.stringify({ ...query, page })}`;
-        // console.log("key ",cacheKey);
+        const cacheKey = `chapters:${JSON.stringify({ page })}`;
 
         const cachedData = await redisClient.get(cacheKey);
         // console.log("cached data", cachedData);
@@ -32,8 +31,7 @@ export async function getAllChapters(req, res) {
         const chapters = await getChaptersService(query, skip, limit);
         // add to cache
         await redisClient.set(cacheKey, JSON.stringify(chapters.data), { EX: 3600 });
-
-        res.status(200).json(chapters);
+        res.status(200).json(chapters.data);
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: "Internal server error!" });
