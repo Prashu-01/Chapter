@@ -5,8 +5,10 @@ dotenv.config();
 const redisClient = createClient({
     username: process.env.user,
     password: process.env.Password,
-    host: process.env.Host,
-    port: process.env.RPort,
+    socket: {
+        host: process.env.Host,
+        port: process.env.RPort,
+    }
 });
 
 redisClient.on("error", (err) => console.error("Redis Client Error", err));
